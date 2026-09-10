@@ -22,7 +22,7 @@ function ArticleDetail() {
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isStaff } = useAuth();
+  const { isStaff, user } = useAuth();
 
   const [article, setArticle] = useState(null);
   const [log, setLog] = useState([]);
@@ -30,6 +30,10 @@ function ArticleDetail() {
   const [newComment, setNewComment] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ title: "", content: "", category: "" });
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -94,6 +98,39 @@ function ArticleDetail() {
     }
   };
 
+  const isOwner = article && user && user.id === article.user_id;
+  const canEdit =
+    isStaff || (isOwner && ["draft", "pending"].includes(article?.status));
+
+  const startEdit = () => {
+    setEditForm({
+      title: article.title,
+      content: article.content,
+      category: article.category || ""
+    });
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+
+    try {
+      await api.put(`/articles/${id}`, editForm);
+      setIsEditing(false);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Не удалось сохранить изменения");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!article) {
     return (
       <div className="page">
@@ -112,18 +149,66 @@ function ArticleDetail() {
 
       <section className="card">
         <div className="article-detail__meta">
-          <h1 className="page-title">{article.title}</h1>
+          {!isEditing && <h1 className="page-title">{article.title}</h1>}
           <span className={`badge badge--${article.status === "published" ? "success" : "muted"}`}>
             {STATUS_LABELS[article.status]}
           </span>
         </div>
 
-        <p className="muted">
-          {article.category || "Без рубрики"} · {article.author} ·{" "}
-          {new Date(article.created_at).toLocaleString("ru-RU")}
-        </p>
+        {!isEditing && (
+          <p className="muted">
+            {article.category || "Без рубрики"} · {article.author} ·{" "}
+            {new Date(article.created_at).toLocaleString("ru-RU")}
+          </p>
+        )}
 
-        <div className="article-detail__body">{article.content}</div>
+        {isEditing ? (
+          <form onSubmit={saveEdit} className="stacked-form">
+            <input
+              placeholder="Заголовок"
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              required
+            />
+            <input
+              placeholder="Рубрика"
+              value={editForm.category}
+              onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+            />
+            <textarea
+              placeholder="Текст статьи"
+              value={editForm.content}
+              onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+              required
+              rows={8}
+            />
+            <div className="table__actions">
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {saving ? "Сохранение..." : "Сохранить"}
+              </button>
+              <button type="button" className="btn-ghost" onClick={cancelEdit} disabled={saving}>
+                Отмена
+              </button>
+            </div>
+            {!isStaff && article.status === "draft" && (
+              <p className="muted">
+                После сохранения статья снова уйдёт на модерацию.
+              </p>
+            )}
+          </form>
+        ) : (
+          <>
+            <div className="article-detail__body">{article.content}</div>
+
+            {canEdit && (
+              <div className="table__actions">
+                <button className="btn-ghost" onClick={startEdit}>
+                  Редактировать
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
         {isStaff && (
           <div className="moderator-actions">
