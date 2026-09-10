@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -88,8 +88,7 @@ function Login() {
       </form>
 
       <p className="auth-note">
-        Регистрация новых пользователей закрыта. Для получения доступа
-        обратитесь к администратору системы.
+        Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
       </p>
 
     </div>
