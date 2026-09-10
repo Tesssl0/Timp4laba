@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE articles (
+CREATE TABLE IF NOT EXISTS articles (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE articles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE comments (
+CREATE TABLE IF NOT EXISTS comments (
     id SERIAL PRIMARY KEY,
     article_id INTEGER REFERENCES articles(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -31,7 +31,7 @@ CREATE TABLE comments (
 );
 
 -- Жалобы читателей на комментарии (раздел «Модерация» -> «Жалобы на комментарии»)
-CREATE TABLE comment_reports (
+CREATE TABLE IF NOT EXISTS comment_reports (
     id SERIAL PRIMARY KEY,
     comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
     reporter_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -39,7 +39,7 @@ CREATE TABLE comment_reports (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE moderation_logs (
+CREATE TABLE IF NOT EXISTS moderation_logs (
     id SERIAL PRIMARY KEY,
     article_id INTEGER REFERENCES articles(id) ON DELETE CASCADE,
     moderator_id INTEGER REFERENCES users(id),
@@ -48,9 +48,9 @@ CREATE TABLE moderation_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_articles_status ON articles(status);
-CREATE INDEX idx_comments_article ON comments(article_id);
-CREATE INDEX idx_comment_reports_comment ON comment_reports(comment_id);
+CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
+CREATE INDEX IF NOT EXISTS idx_comments_article ON comments(article_id);
+CREATE INDEX IF NOT EXISTS idx_comment_reports_comment ON comment_reports(comment_id);
 
 -- Пароли: admin@mediaguard.ru / admin123, moderator@mediaguard.ru / moderator123
 INSERT INTO users(username, email, password_hash, role)
