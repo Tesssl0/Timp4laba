@@ -1,7 +1,10 @@
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const pool = require("./db");
 
 const authRoutes = require("./routes/authRoutes");
 const articleRoutes = require("./routes/articleRoutes");
@@ -54,6 +57,25 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+async function ensureSchema() {
+  try {
+    const check = await pool.query("SELECT to_regclass('public.users') AS exists");
+    if (check.rows[0].exists) {
+      console.log("Схема БД уже существует — миграция не требуется.");
+      return;
+    }
+    console.log("Таблицы не найдены — выполняю db.sql...");
+    const sqlPath = path.join(__dirname, "..", "db.sql");
+    const sql = fs.readFileSync(sqlPath, "utf8");
+    await pool.query(sql);
+    console.log("Миграция db.sql выполнена успешно.");
+  } catch (err) {
+    console.error("Ошибка при выполнении миграции db.sql:", err);
+  }
+}
+
+ensureSchema().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
