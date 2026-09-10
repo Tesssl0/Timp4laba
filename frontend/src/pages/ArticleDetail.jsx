@@ -44,8 +44,10 @@ function ArticleDetail() {
       setArticle(articleRes.data);
       setComments(commentsRes.data);
 
-      if (isStaff) {
-        const logRes = await api.get(`/moderation/${id}/log`);
+      const owner = user && user.id === articleRes.data.user_id;
+
+      if (isStaff || owner) {
+        const logRes = await api.get(`/articles/${id}/log`);
         setLog(logRes.data);
       }
     } catch (err) {
@@ -236,9 +238,11 @@ function ArticleDetail() {
         )}
       </section>
 
-      {isStaff && (
+      {(isStaff || isOwner) && (
         <section className="card">
-          <h2 className="card__title">Журнал модерации</h2>
+          <h2 className="card__title">
+            {isStaff ? "Журнал модерации" : "История модерации"}
+          </h2>
           {log.length === 0 ? (
             <p className="muted">Записей пока нет</p>
           ) : (
