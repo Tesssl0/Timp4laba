@@ -164,6 +164,45 @@ exports.update = asyncHandler(async (req, res) => {
 
 });
 
+// GET /api/articles/:id/log
+// Журнал модерации статьи: доступен автору статьи (видит причины
+// отклонения/доработки) и модераторам/админам.
+exports.getLog = asyncHandler(async (req, res) => {
+
+  const { id } = req.params;
+
+  const article = await pool.query(
+    `SELECT user_id FROM articles WHERE id = $1`,
+    [id]
+  );
+
+  if (article.rows.length === 0) {
+    const err = new Error("Статья не найдена");
+    err.status = 404;
+    throw err;
+  }
+
+  const isOwner = req.user.id === article.rows[0].user_id;
+
+  if (!isOwner && !isStaff(req.user.role)) {
+    const err = new Error("Недостаточно прав");
+    err.status = 403;
+    throw err;
+  }
+
+  const result = await pool.query(
+    `SELECT l.id, l.action, l.reason, l.created_at, u.username AS moderator
+     FROM moderation_logs l
+     LEFT JOIN users u ON u.id = l.moderator_id
+     WHERE l.article_id = $1
+     ORDER BY l.created_at DESC`,
+    [id]
+  );
+
+  res.json(result.rows);
+
+});
+
 // DELETE /api/articles/:id
 exports.remove = asyncHandler(async (req, res) => {
 
