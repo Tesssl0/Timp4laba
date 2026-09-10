@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Articles from "./pages/Articles";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -25,6 +26,8 @@ function App() {
           <Route path="/" element={<Navigate to="/articles" />} />
 
           <Route path="/login" element={<Login />} />
+
+          <Route path="/register" element={<Register />} />
 
           <Route
             path="/dashboard"
