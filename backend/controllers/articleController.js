@@ -147,12 +147,17 @@ exports.update = asyncHandler(async (req, res) => {
     throw err;
   }
 
+  // Если автор дорабатывает статью, возвращённую модератором (статус
+  // draft), при сохранении она автоматически уходит обратно в очередь
+  // на модерацию. Модератор/админ, редактируя статью, статус не меняет.
+  const nextStatus = !staff && article.status === "draft" ? "pending" : article.status;
+
   const result = await pool.query(
     `UPDATE articles
-     SET title = $1, content = $2, category = $3, updated_at = NOW()
-     WHERE id = $4
+     SET title = $1, content = $2, category = $3, status = $4, updated_at = NOW()
+     WHERE id = $5
      RETURNING *`,
-    [title, content, category || null, id]
+    [title, content, category || null, nextStatus, id]
   );
 
   res.json(result.rows[0]);
