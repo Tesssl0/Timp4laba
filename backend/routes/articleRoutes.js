@@ -8,11 +8,13 @@ const {
   getOne,
   create,
   update,
-  remove
+  remove,
+  getLog
 } = require("../controllers/articleController");
 
 router.get("/", optionalAuth, getAll);
 router.get("/:id", optionalAuth, getOne);
+router.get("/:id/log", auth, getLog);
 
 router.post("/", auth, create);
 router.put("/:id", auth, update);
